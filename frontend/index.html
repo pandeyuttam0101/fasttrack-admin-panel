@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fast Track Mechanic Services</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body class="bg-slate-900 text-slate-100">
+
+<!-- NAV -->
+<nav class="bg-slate-800 p-4 flex justify-between items-center">
+  <div class="flex items-center gap-3">
+    <div class="w-12 h-12 bg-red-500 flex items-center justify-center rounded-lg text-xl">🔧</div>
+    <div>
+      <h1 class="font-bold text-lg">Fast Track Mechanic Services</h1>
+      <p class="text-sm">24/7 Emergency Mechanic</p>
+    </div>
+  </div>
+
+  <a href="tel:1800MECHANIC" class="bg-red-500 px-4 py-2 rounded-lg font-bold">
+    📞 Call Now
+  </a>
+</nav>
+
+<!-- HERO -->
+<section class="text-center py-16">
+  <h2 class="text-4xl font-bold">Breakdown? We're On Our Way!</h2>
+  <p class="mt-3 text-slate-300">24/7 roadside assistance across the city</p>
+</section>
+
+<!-- FORM -->
+<section class="max-w-xl mx-auto bg-slate-800 p-6 rounded-2xl shadow-xl">
+  <h3 class="text-2xl font-bold mb-4">Request Service</h3>
+
+  <form id="serviceForm" class="space-y-4">
+
+    <!-- Issue Type -->
+    <select name="service" class="input" required>
+      <option value="">Select Issue Type</option>
+      <option>Dead Battery / Jump Start</option>
+      <option>Flat Tire / Tire Change</option>
+      <option>Vehicle Lockout</option>
+      <option>Towing Service</option>
+      <option>Out of Fuel</option>
+      <option>Engine Problem</option>
+      <option>Accident / Collision</option>
+      <option>Other Issue</option>
+    </select>
+
+    <!-- Vehicle -->
+    <input class="input" name="vehicle" placeholder="Vehicle Model (e.g. Swift)" required />
+    <input class="input" name="year" placeholder="Vehicle Year (e.g. 2021)" required />
+
+    <!-- Location -->
+    <div class="flex gap-2">
+      <input class="input flex-1" name="location" id="location" placeholder="Current Location" required />
+      <button type="button" onclick="getLocation()" class="bg-blue-500 px-3 rounded-lg">
+        📍
+      </button>
+    </div>
+
+    <!-- Phone -->
+    <input class="input" name="phone" placeholder="Phone Number" required />
+
+    <!-- Extra -->
+    <textarea class="input" name="description" placeholder="Additional Details"></textarea>
+
+    <button type="submit" class="w-full bg-red-500 py-3 rounded-lg font-bold">
+      Submit Request
+    </button>
+
+  </form>
+
+  <p id="success" class="hidden text-green-400 mt-4">
+    ✅ Request submitted successfully!
+  </p>
+</section>
+
+<!-- FOOTER -->
+<footer class="mt-16 bg-slate-800 p-8">
+  <div class="max-w-6xl mx-auto grid md:grid-cols-4 gap-6 text-sm">
+
+    <div>
+      <h4 class="font-bold mb-2">Fast Track Mechanic</h4>
+      <p>Fast. Reliable. 24/7 Roadside Assistance.</p>
+    </div>
+
+    <div>
+      <h4 class="font-bold mb-2">Our Services</h4>
+      <ul class="space-y-1">
+        <li>Jump Start</li>
+        <li>Towing</li>
+        <li>Tire Change</li>
+        <li>Emergency Repair</li>
+      </ul>
+    </div>
+
+    <div>
+      <h4 class="font-bold mb-2">Contact</h4>
+      <p>📞 1800-MECHANIC</p>
+      <p>📍 Citywide Service</p>
+    </div>
+
+    <div>
+      <h4 class="font-bold mb-2">Follow Us</h4>
+      <p>Instagram | Facebook | WhatsApp</p>
+    </div>
+
+  </div>
+</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>

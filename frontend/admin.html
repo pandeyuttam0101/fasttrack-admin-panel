@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js (admin.js se pehle load hona chahiye) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-slate-900 text-white p-6">
+
+<!-- ================= HEADER ================= -->
+<div class="flex justify-between items-center mb-6">
+  <h1 class="text-3xl font-bold">📋 Admin Dashboard</h1>
+
+  <button
+    id="logoutBtn"
+    class="bg-red-500 px-4 py-2 rounded-lg font-bold hover:bg-red-600 transition"
+  >
+    Logout
+  </button>
+</div>
+
+<!-- ================= 8.1 STATS CARDS ================= -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <div class="bg-slate-800 p-4 rounded-xl shadow">
+    <p class="text-sm text-gray-400">Total Requests</p>
+    <h2 id="total" class="text-2xl font-bold">0</h2>
+  </div>
+
+  <div class="bg-slate-800 p-4 rounded-xl shadow">
+    <p class="text-sm text-gray-400">Today</p>
+    <h2 id="today" class="text-2xl font-bold">0</h2>
+  </div>
+
+  <div class="bg-slate-800 p-4 rounded-xl shadow">
+    <p class="text-sm text-gray-400">Emergency</p>
+    <h2 id="emergency" class="text-2xl font-bold">0</h2>
+  </div>
+</div>
+
+<!-- ================= 8.2 SEARCH FILTER ================= -->
+<input
+  id="search"
+  type="text"
+  placeholder="Search by service or phone"
+  class="mb-6 w-full p-3 rounded bg-slate-800 border border-slate-600
+         focus:outline-none focus:ring-2 focus:ring-red-500"
+/>
+
+<!-- ================= TABLE ================= -->
+<div class="overflow-x-auto mb-8">
+  <table class="w-full border border-slate-700 text-sm">
+    <thead class="bg-slate-800">
+      <tr>
+        <th class="p-2">Service</th>
+        <th class="p-2">Vehicle</th>
+        <th class="p-2">Year</th>
+        <th class="p-2">Phone</th>
+        <th class="p-2">Location</th>
+        <th class="p-2">Details</th>
+        <th class="p-2">Time</th>
+      </tr>
+    </thead>
+    <tbody id="data" class="bg-slate-700"></tbody>
+  </table>
+</div>
+
+<!-- ================= CHARTS ================= -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+  <div class="bg-slate-800 p-4 rounded-xl">
+    <canvas id="lineChart"></canvas>
+  </div>
+
+  <div class="bg-slate-800 p-4 rounded-xl">
+    <canvas id="pieChart"></canvas>
+  </div>
+</div>
+
+<!-- ================= ADMIN JS ================= -->
+<script src="js/admin.js"></script>
+
+</body>
+</html>
