@@ -2,6 +2,7 @@ const express = require("express");
 const path = require("path");
 const mongoose = require("mongoose");
 const session = require("express-session");
+//const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const app = express();
@@ -45,8 +46,22 @@ const RequestSchema = new mongoose.Schema({
 
 const Request = mongoose.model("Request", RequestSchema);
 
+// =========================
+// EMAIL CONFIG
+// =========================
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
+
+
 /* =====================================================
-   ✅ STEP-2: FRONTEND STATIC SERVE (VERY IMPORTANT)
+   ✅ STEP-2: FRONTEND STATIC SERVE
 ===================================================== */
 app.use(express.static(path.join(__dirname, "../frontend")));
 
@@ -54,6 +69,17 @@ app.use(express.static(path.join(__dirname, "../frontend")));
    ✅ STEP-3: ROOT ROUTE
 ===================================================== */
 app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/admin-login.html"));
+});
+
+/* =====================================================
+   ✅ STEP-11: LOGIN PAGE PROTECTION
+   (Already logged-in → redirect to dashboard)
+===================================================== */
+app.get("/admin-login.html", (req, res) => {
+  if (req.session.admin) {
+    return res.redirect("/admin.html");
+  }
   res.sendFile(path.join(__dirname, "../frontend/admin-login.html"));
 });
 
@@ -114,6 +140,24 @@ app.get("/admin/requests", isAdmin, async (req, res) => {
 app.post("/request", async (req, res) => {
   try {
     await Request.create(req.body);
+    // =========================
+// SEND EMAIL (STEP-4.3)
+// =========================
+await transporter.sendMail({
+  from: `"FastTrack Alerts" <${process.env.EMAIL_USER}>`,
+  to: process.env.EMAIL_USER,
+  subject: "🚗 New Service Request Received",
+  html: `
+    <h3>New Service Request</h3>
+    <p><b>Service:</b> ${req.body.service}</p>
+    <p><b>Vehicle:</b> ${req.body.vehicle}</p>
+    <p><b>Year:</b> ${req.body.year}</p>
+    <p><b>Phone:</b> ${req.body.phone}</p>
+    <p><b>Location:</b> ${req.body.location}</p>
+    <p><b>Description:</b> ${req.body.description}</p>
+  `
+});
+
     res.json({ success: true });
   } catch {
     res.status(500).json({ success: false });
@@ -123,7 +167,7 @@ app.post("/request", async (req, res) => {
 /* =========================
    SERVER START
 ========================= */
-const PORT = process.env.PORT || 2018;
+const PORT = process.env.PORT || 2013;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

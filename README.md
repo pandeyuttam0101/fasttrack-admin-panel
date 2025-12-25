@@ -216,3 +216,5 @@ Audit logs
 👨‍💻 Author
 
 Built step-by-step for learning & production-ready admin panel 🚀
+
+https://fasttrack-admin-panel.onrender.com/admin-login.html
