@@ -134,6 +134,43 @@ app.get("/admin/requests", isAdmin, async (req, res) => {
   res.json(data);
 });
 
+
+/* excel export*/
+
+const ExcelJS = require("exceljs");
+
+app.get("/admin/export", isAdmin, async (req, res) => {
+  const data = await Request.find().sort({ createdAt: -1 });
+
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Requests");
+
+  sheet.columns = [
+    { header: "Service", key: "service", width: 20 },
+    { header: "Vehicle", key: "vehicle", width: 15 },
+    { header: "Year", key: "year", width: 10 },
+    { header: "Phone", key: "phone", width: 15 },
+    { header: "Location", key: "location", width: 20 },
+    { header: "Description", key: "description", width: 30 },
+    { header: "Date", key: "createdAt", width: 20 }
+  ];
+
+  data.forEach(d => sheet.addRow(d));
+
+  res.setHeader(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
+  res.setHeader(
+    "Content-Disposition",
+    "attachment; filename=requests.xlsx"
+  );
+
+  await workbook.xlsx.write(res);
+  res.end();
+});
+
+
 /* =========================
    FORM SUBMIT API
 ========================= */
@@ -167,7 +204,7 @@ await transporter.sendMail({
 /* =========================
    SERVER START
 ========================= */
-const PORT = process.env.PORT || 2013;
+const PORT = process.env.PORT || 2014;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
