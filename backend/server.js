@@ -2,7 +2,7 @@ const express = require("express");
 const path = require("path");
 const mongoose = require("mongoose");
 const session = require("express-session");
-//const nodemailer = require("nodemailer");
+const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const app = express();
@@ -16,41 +16,58 @@ app.use(express.urlencoded({ extended: true }));
 /* =========================
    SESSION SETUP
 ========================= */
-app.use(session({
-  secret: "admin-secret-key",
-  resave: false,
-  saveUninitialized: false
-}));
+app.use(
+  session({
+    secret: "admin-secret-key",
+    resave: false,
+    saveUninitialized: false
+  })
+);
 
 /* =========================
    MongoDB Connection
 ========================= */
-mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 5000
-})
-.then(() => console.log("✅ MongoDB Connected"))
-.catch(err => console.log("❌ MongoDB Error:", err.message));
+mongoose
+  .connect(process.env.MONGO_URI, {
+    serverSelectionTimeoutMS: 5000
+  })
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch(err => console.log("❌ MongoDB Error:", err.message));
 
 /* =========================
-   Schema
+   REQUEST SCHEMA
 ========================= */
-const RequestSchema = new mongoose.Schema({
-  service: String,
-  vehicle: String,
-  year: String,
-  phone: String,
-  location: String,
-  description: String,
-  createdAt: { type: Date, default: Date.now }
-});
+const RequestSchema = new mongoose.Schema(
+  {
+    service: String,
+    vehicle: String,
+    year: String,
+    phone: String,
+    location: String,
+    description: String,
+
+    status: {
+      type: String,
+      default: "Pending"
+    },
+
+    emergency: {
+      type: Boolean,
+      default: false
+    },
+
+    // ✅ MECHANIC DETAILS
+    mechanicName: String,
+    mechanicPhone: String
+  },
+  { timestamps: true }
+);
 
 const Request = mongoose.model("Request", RequestSchema);
 
-// =========================
-// EMAIL CONFIG
-// =========================
-const nodemailer = require("nodemailer");
-
+/* =========================
+   EMAIL CONFIG (SAFE)
+========================= */
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -59,32 +76,17 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-
-/* =====================================================
-   ✅ STEP-2: FRONTEND STATIC SERVE
-===================================================== */
+/* =========================
+   STATIC FRONTEND
+========================= */
 app.use(express.static(path.join(__dirname, "../frontend")));
 
-/* =====================================================
-   ✅ STEP-3: ROOT ROUTE
-===================================================== */
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/admin-login.html"));
-});
-
-/* =====================================================
-   ✅ STEP-11: LOGIN PAGE PROTECTION
-   (Already logged-in → redirect to dashboard)
-===================================================== */
-app.get("/admin-login.html", (req, res) => {
-  if (req.session.admin) {
-    return res.redirect("/admin.html");
-  }
-  res.sendFile(path.join(__dirname, "../frontend/admin-login.html"));
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
 /* =========================
-   ADMIN LOGIN API
+   ADMIN LOGIN
 ========================= */
 app.post("/admin/login", (req, res) => {
   const { username, password } = req.body;
@@ -93,110 +95,95 @@ app.post("/admin/login", (req, res) => {
     req.session.admin = true;
     return res.json({ success: true });
   }
-
   res.json({ success: false });
 });
 
-/* =========================
-   ADMIN LOGOUT API
-========================= */
-app.get("/admin/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.clearCookie("connect.sid");
-    res.json({ success: true });
-  });
-});
-
-/* =========================
-   AUTH MIDDLEWARE
-========================= */
 function isAdmin(req, res, next) {
   if (req.session.admin) return next();
   res.redirect("/admin-login.html");
 }
 
 /* =========================
-   PROTECT ADMIN PAGE
-========================= */
-app.get("/admin.html", isAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/admin.html"));
-});
-
-app.get("/admin", isAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/admin.html"));
-});
-
-/* =========================
-   ADMIN DATA API
+   ADMIN REQUEST LIST
 ========================= */
 app.get("/admin/requests", isAdmin, async (req, res) => {
   const data = await Request.find().sort({ createdAt: -1 });
   res.json(data);
 });
 
+/* =========================
+   ADMIN UPDATE STATUS
+========================= */
+app.put("/admin/request/:id", async (req, res) => {
+  try {
+    const { status } = req.body;
 
-/* excel export*/
+    const updateData = { status };
 
-const ExcelJS = require("exceljs");
+    // 🔥 AUTO ASSIGN MECHANIC
+    if (status === "Accepted") {
+      updateData.mechanicName = "Rahul";
+      updateData.mechanicPhone = "9876543210";
+    }
 
-app.get("/admin/export", isAdmin, async (req, res) => {
-  const data = await Request.find().sort({ createdAt: -1 });
-
-  const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet("Requests");
-
-  sheet.columns = [
-    { header: "Service", key: "service", width: 20 },
-    { header: "Vehicle", key: "vehicle", width: 15 },
-    { header: "Year", key: "year", width: 10 },
-    { header: "Phone", key: "phone", width: 15 },
-    { header: "Location", key: "location", width: 20 },
-    { header: "Description", key: "description", width: 30 },
-    { header: "Date", key: "createdAt", width: 20 }
-  ];
-
-  data.forEach(d => sheet.addRow(d));
-
-  res.setHeader(
-    "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-  );
-  res.setHeader(
-    "Content-Disposition",
-    "attachment; filename=requests.xlsx"
-  );
-
-  await workbook.xlsx.write(res);
-  res.end();
+    await Request.findByIdAndUpdate(req.params.id, updateData);
+    res.json({ success: true });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ success: false });
+  }
 });
 
+/* =========================
+   ✅ STEP-4: CUSTOMER STATUS (LATEST REQUEST)
+========================= */
+app.get("/status/:phone", async (req, res) => {
+  try {
+    const phone = req.params.phone.trim();
+
+    const request = await Request.findOne({ phone })
+      .sort({ createdAt: -1 });
+
+    if (!request) {
+      return res.json({ success: false });
+    }
+
+    res.json({
+      success: true,
+      service: request.service,
+      status: request.status,
+      mechanic: request.mechanicName
+        ? {
+            name: request.mechanicName,
+            phone: request.mechanicPhone
+          }
+        : null
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ success: false });
+  }
+});
 
 /* =========================
-   FORM SUBMIT API
+   ✅ STEP-3: FORM SUBMIT (PHONE CLEAN FIX)
 ========================= */
 app.post("/request", async (req, res) => {
   try {
-    await Request.create(req.body);
-    // =========================
-// SEND EMAIL (STEP-4.3)
-// =========================
-await transporter.sendMail({
-  from: `"FastTrack Alerts" <${process.env.EMAIL_USER}>`,
-  to: process.env.EMAIL_USER,
-  subject: "🚗 New Service Request Received",
-  html: `
-    <h3>New Service Request</h3>
-    <p><b>Service:</b> ${req.body.service}</p>
-    <p><b>Vehicle:</b> ${req.body.vehicle}</p>
-    <p><b>Year:</b> ${req.body.year}</p>
-    <p><b>Phone:</b> ${req.body.phone}</p>
-    <p><b>Location:</b> ${req.body.location}</p>
-    <p><b>Description:</b> ${req.body.description}</p>
-  `
-});
+    const cleanPhone = req.body.phone?.trim();
+
+    if (!cleanPhone) {
+      return res.json({ success: false });
+    }
+
+    await Request.create({
+      ...req.body,
+      phone: cleanPhone
+    });
 
     res.json({ success: true });
-  } catch {
+  } catch (err) {
+    console.log(err);
     res.status(500).json({ success: false });
   }
 });
@@ -204,8 +191,7 @@ await transporter.sendMail({
 /* =========================
    SERVER START
 ========================= */
-const PORT = process.env.PORT || 2014;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+const PORT = process.env.PORT || 2025;
+app.listen(PORT, () =>
+  console.log(`🚀 Server running on http://localhost:${PORT}`)
+);
